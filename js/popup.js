@@ -7,6 +7,10 @@ let $ = (selector) => {
     return elements;
 };
 
+let createElement = (elem)=> {
+    return document.createElement(elem);
+}
+
 
 let summTime = (data) => {
     let jobTime = {};
@@ -93,6 +97,34 @@ let getData = (items) => {
 
             let issues = res.issues;
 
+            let getSelect = (id) => {
+                let status = {
+                    "11": "Ошибка",
+                    "18": "На тестировании",
+                    "5": "Закрыт",
+                    "14": "Отклонен",
+                    "7": "Протестирован"
+                };
+
+                let select = createElement("select");
+
+                for (key in status) {
+                   let option = createElement("option");
+                   option.value = key;
+                   option.innerText = status[key];
+                   if (id == key) {
+                        option.setAttribute("selected", "true");
+                   }
+                   select.appendChild(option);
+                }
+
+                let td = createElement("td");
+                td.appendChild(select);
+
+                return td;
+            };
+
+
             if (issues.length > 0) {
                 // table.classList.remove("hide");
 
@@ -100,7 +132,10 @@ let getData = (items) => {
                     let tr = document.createElement('tr');
                     let issue = issues[i];
                     let created_on = issue["created_on"].split("T").join('\n');
-                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td><td>${created_on}</td><td>${issue["status"]["name"]}</td>`;
+                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>`+
+                                   `<td>${created_on}</td>`;
+
+                    tr.appendChild(getSelect(issue["status"]["id"]));
                     table.appendChild(tr);
                 }
             }

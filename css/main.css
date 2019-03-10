@@ -1,5 +1,5 @@
 body {
-    width: 468px;
+    width: 600px;
 }
 
 .customers {
@@ -40,7 +40,7 @@ body {
 }
 
 .issues {
-    min-width: 440px;
+    min-width: 600px;
 }
 
 .message {
