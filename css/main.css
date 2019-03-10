@@ -40,7 +40,7 @@ body {
 }
 
 .issues {
-    width: 271px;
+    min-width: 440px;
 }
 
 .message {

@@ -45,39 +45,39 @@ let getData = (items) => {
     let headers = new Headers({ 'Authorization': 'Basic ' + btoa(items.username + ":" + items.password) });
     var message = $(".message");
 
-    fetch(`http://redmine.mango.local/time_entries.json?user_id=${items.user_id}&from=${items.start_date}&to=${items.end_date}&limit=100`, {
-            method: 'GET',
-            headers: headers
-        })
-        .then(function(response) {
-            let status = response.status;
-            if (status == 200) {
-                return response.json();
-            }
-            throw new Error(status);
-        })
-        .then(function(res) {
-            console.log("res: " + JSON.stringify(res));
-            // console.log(res);
-            let table = $(".time");
+    // fetch(`http://redmine.mango.local/time_entries.json?user_id=${items.user_id}&from=${items.start_date}&to=${items.end_date}&limit=100`, {
+    //         method: 'GET',
+    //         headers: headers
+    //     })
+    //     .then(function(response) {
+    //         let status = response.status;
+    //         if (status == 200) {
+    //             return response.json();
+    //         }
+    //         throw new Error(status);
+    //     })
+    //     .then(function(res) {
+    //         console.log("res: " + JSON.stringify(res));
+    //         // console.log(res);
+    //         let table = $(".time");
 
-            let time_entries = res.time_entries;
-            let job_time = summTime(time_entries);
+    //         let time_entries = res.time_entries;
+    //         let job_time = summTime(time_entries);
 
-            for (let i in job_time) {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td>${i}</td><td>${job_time[i]}</td>`;
-                table.appendChild(tr);
-            }
-        })
-        .catch(e => {
-            main.classList.add("hide");
-            message.classList.remove("hide");
-            message.innerHTML = e;
-        });
+    //         for (let i in job_time) {
+    //             let tr = document.createElement('tr');
+    //             tr.innerHTML = `<td>${i}</td><td>${job_time[i]}</td>`;
+    //             table.appendChild(tr);
+    //         }
+    //     })
+    //     .catch(e => {
+    //         main.classList.add("hide");
+    //         message.classList.remove("hide");
+    //         message.innerHTML = e;
+    //     });
 
 
-    fetch(`http://redmine.mango.local/issues.json?project_id=${items.project_id}&status_id=1&tracker_id=10&cf_36=Проблема&assigned_to_id=194`, {
+    fetch(`http://redmine.mango.local/issues.json?project_id=${items.project_id}&status_id=open&tracker_id=59`, {
             method: 'GET',
             headers: headers
         })
@@ -100,7 +100,7 @@ let getData = (items) => {
                     let tr = document.createElement('tr');
                     let issue = issues[i];
                     let created_on = issue["created_on"].split("T").join('\n');
-                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["author"]["name"]}</td><td>${created_on}</td><td>${issue["priority"]["name"]}</td>`;
+                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td><td>${created_on}</td><td>${issue["status"]["name"]}</td>`;
                     table.appendChild(tr);
                 }
             }
