@@ -1,4 +1,18 @@
-let $ = (selector) => {
+let main = $(".main");
+let table = $(".issues");
+let message = $(".message");
+
+let settings = {
+    "url": "",
+    "username": "",
+    "password": "",
+    "start_date": "",
+    "end_date": "",
+    "project_id": ""
+};
+
+
+function $(selector) {
     let elements = document.querySelectorAll(selector);
     if (elements.length == 1) {
         elements = elements[0];
@@ -8,7 +22,7 @@ let $ = (selector) => {
 };
 
 
-let summTime = (data) => {
+function summTime(data) {
     let jobTime = {};
     data.forEach(function(i) {
         let date = i.spent_on;
@@ -21,16 +35,19 @@ let summTime = (data) => {
     return jobTime;
 }
 
-let createSelect = (id) => {
+function createSelect (id) {
     let status = {
         "11": "Ошибка",
         "18": "На тестировании",
         "5": "Закрыт",
         "14": "Отклонен",
-        "7": "Протестирован"
+        "7": "Протестирован",
+        "1": "Новый",
+        "2": "Реализован",
+        "12": "Принят"
     };
 
-    let select = "<select>";
+    let select = "<select class='issueStatus'>";
     for (key in status) {
         select += `<option value=${key} ${(id == key) ? "selected" : ""}>${status[key]}</option>`;
     }
@@ -39,7 +56,7 @@ let createSelect = (id) => {
     return select;
 };
 
-let createDate = (param) => {
+function createDate(param) {
     let date = new Date()
     let checkTime = (i) => {
         if (i < 10) { i = "0" + i }
@@ -55,14 +72,33 @@ let createDate = (param) => {
     return `${year}-${month}-${day}`;
 };
 
-let main = $(".main");
+function changeStatusIssue(e){
+    let headers = new Headers({ 
+        'Authorization': 'Basic ' + btoa(settings.username + ":" + settings.password),
+        'Content-Type': 'application/json'
+    });
+    let target = event.target;
+    if (target.className === "issueStatus") {
+        let statusId = target.value;
+        let id = target.parentNode.parentNode.id;
 
-let getData = (items) => {
-    console.log(items);
-    let headers = new Headers({ 'Authorization': 'Basic ' + btoa(items.username + ":" + items.password) });
-    var message = $(".message");
+        fetch(settings.url + id + ".json", {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify({"issue": {"status_id": statusId}}),
+        })
+    }
+}
 
-    fetch(`http://redmine.mango.local/issues.json?project_id=${items.project_id}&status_id=open&tracker_id=59`, {
+function addWatcher(){
+    table.addEventListener("change", changeStatusIssue)
+}
+
+
+function getIssues() {
+    let headers = new Headers({ 'Authorization': 'Basic ' + btoa(settings.username + ":" + settings.password) });
+
+    fetch(settings.url + `issues.json?project_id=${settings.project_id}&status_id=open&tracker_id=59`, {
             method: 'GET',
             headers: headers
         })
@@ -74,14 +110,15 @@ let getData = (items) => {
             throw new Error(status);
         })
         .then(function(res) {
-            let table = $(".issues");
             let issues = res.issues;
 
             if (issues.length > 0) {
 
                 for (let i in issues) {
-                    let tr = document.createElement('tr');
                     let issue = issues[i];
+
+                    let tr = document.createElement('tr');
+                    tr.setAttribute("id", issue["id"])
                     let created_on = issue["created_on"].split("T").join('\n');
                     tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
                         `<td class="created_on">${created_on}</td><td>${createSelect(issue["status"]["id"])}</td>`;
@@ -98,6 +135,8 @@ let getData = (items) => {
 }
 
 
+
+
 function ready() {
     let start_date = createDate();
     let end_date = createDate("now");
@@ -105,18 +144,18 @@ function ready() {
     chrome.storage.sync.get({
         "username_redmine": '',
         "password_redmine": '',
-        "user_id_redmine": '',
         "project_id_redmine": ''
     }, function(items) {
-        let params = {
+        settings = {
+            "url": "http://redmine.mango.local/",
             "username": items.username_redmine,
             "password": items.password_redmine,
-            "user_id": items.user_id_redmine,
             "start_date": start_date,
             "end_date": end_date,
             "project_id": items.project_id_redmine
         };
-        getData(params);
+        addWatcher();
+        getIssues();
     });
 
 }
