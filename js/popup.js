@@ -7,10 +7,6 @@ let $ = (selector) => {
     return elements;
 };
 
-let createElement = (elem)=> {
-    return document.createElement(elem);
-}
-
 
 let summTime = (data) => {
     let jobTime = {};
@@ -25,6 +21,23 @@ let summTime = (data) => {
     return jobTime;
 }
 
+let createSelect = (id) => {
+    let status = {
+        "11": "Ошибка",
+        "18": "На тестировании",
+        "5": "Закрыт",
+        "14": "Отклонен",
+        "7": "Протестирован"
+    };
+
+    let select = "<select>";
+    for (key in status) {
+        select += `<option value=${key} ${(id == key) ? "selected" : ""}>${status[key]}</option>`;
+    }
+    select += "</select>";
+
+    return select;
+};
 
 let createDate = (param) => {
     let date = new Date()
@@ -49,38 +62,6 @@ let getData = (items) => {
     let headers = new Headers({ 'Authorization': 'Basic ' + btoa(items.username + ":" + items.password) });
     var message = $(".message");
 
-    // fetch(`http://redmine.mango.local/time_entries.json?user_id=${items.user_id}&from=${items.start_date}&to=${items.end_date}&limit=100`, {
-    //         method: 'GET',
-    //         headers: headers
-    //     })
-    //     .then(function(response) {
-    //         let status = response.status;
-    //         if (status == 200) {
-    //             return response.json();
-    //         }
-    //         throw new Error(status);
-    //     })
-    //     .then(function(res) {
-    //         console.log("res: " + JSON.stringify(res));
-    //         // console.log(res);
-    //         let table = $(".time");
-
-    //         let time_entries = res.time_entries;
-    //         let job_time = summTime(time_entries);
-
-    //         for (let i in job_time) {
-    //             let tr = document.createElement('tr');
-    //             tr.innerHTML = `<td>${i}</td><td>${job_time[i]}</td>`;
-    //             table.appendChild(tr);
-    //         }
-    //     })
-    //     .catch(e => {
-    //         main.classList.add("hide");
-    //         message.classList.remove("hide");
-    //         message.innerHTML = e;
-    //     });
-
-
     fetch(`http://redmine.mango.local/issues.json?project_id=${items.project_id}&status_id=open&tracker_id=59`, {
             method: 'GET',
             headers: headers
@@ -94,48 +75,17 @@ let getData = (items) => {
         })
         .then(function(res) {
             let table = $(".issues");
-
             let issues = res.issues;
 
-            let getSelect = (id) => {
-                let status = {
-                    "11": "Ошибка",
-                    "18": "На тестировании",
-                    "5": "Закрыт",
-                    "14": "Отклонен",
-                    "7": "Протестирован"
-                };
-
-                let select = createElement("select");
-
-                for (key in status) {
-                   let option = createElement("option");
-                   option.value = key;
-                   option.innerText = status[key];
-                   if (id == key) {
-                        option.setAttribute("selected", "true");
-                   }
-                   select.appendChild(option);
-                }
-
-                let td = createElement("td");
-                td.appendChild(select);
-
-                return td;
-            };
-
-
             if (issues.length > 0) {
-                // table.classList.remove("hide");
 
                 for (let i in issues) {
                     let tr = document.createElement('tr');
                     let issue = issues[i];
                     let created_on = issue["created_on"].split("T").join('\n');
-                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>`+
-                                   `<td>${created_on}</td>`;
+                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
+                        `<td class="created_on">${created_on}</td><td>${createSelect(issue["status"]["id"])}</td>`;
 
-                    tr.appendChild(getSelect(issue["status"]["id"]));
                     table.appendChild(tr);
                 }
             }
