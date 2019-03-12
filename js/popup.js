@@ -82,7 +82,7 @@ function changeStatusIssue(e){
         let statusId = target.value;
         let id = target.parentNode.parentNode.id;
 
-        fetch(settings.url + id + ".json", {
+        fetch(settings.url + "issues/"+ id + ".json", {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify({"issue": {"status_id": statusId}}),
