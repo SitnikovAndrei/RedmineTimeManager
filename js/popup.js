@@ -120,7 +120,7 @@ function getIssues() {
                     let tr = document.createElement('tr');
                     tr.setAttribute("id", issue["id"]);
                     let created_on = issue["created_on"].split("T").join('\n');
-                    tr.innerHTML = `<td>${issue["id"]}</td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
+                    tr.innerHTML = `<td><a href="${url + "issues/" +issue["id"]}">${issue["id"]}<a></td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
                         `<td class="created_on">${created_on}</td><td>${createSelect(issue["status"]["id"])}</td>`;
 
                     table.appendChild(tr);
