@@ -1,9 +1,9 @@
 let main = $(".main");
 let table = $(".issues");
 let message = $(".message");
+let url = "http://redmine.mango.local/";
 
 let settings = {
-    "url": "",
     "username": "",
     "password": "",
     "start_date": "",
@@ -82,7 +82,7 @@ function changeStatusIssue(e){
         let statusId = target.value;
         let id = target.parentNode.parentNode.id;
 
-        fetch(settings.url + "issues/"+ id + ".json", {
+        fetch(url + "issues/"+ id + ".json", {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify({"issue": {"status_id": statusId}}),
@@ -98,7 +98,7 @@ function addWatcher(){
 function getIssues() {
     let headers = new Headers({ 'Authorization': 'Basic ' + btoa(settings.username + ":" + settings.password) });
 
-    fetch(settings.url + `issues.json?project_id=${settings.project_id}&status_id=open&tracker_id=59`, {
+    fetch(url + `issues.json?project_id=${settings.project_id}&status_id=open&tracker_id=59`, {
             method: 'GET',
             headers: headers
         })
@@ -118,9 +118,9 @@ function getIssues() {
                     let issue = issues[i];
 
                     let tr = document.createElement('tr');
-                    tr.setAttribute("id", issue["id"])
+                    tr.setAttribute("id", issue["id"]);
                     let created_on = issue["created_on"].split("T").join('\n');
-                    tr.innerHTML = `<td><a href="${settings.url + "issues/" + issue["id"]}">${issue["id"]}</a></td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
+                    tr.innerHTML = `<td><a href="${url + "issues/" +issue["id"]}">${issue["id"]}<a></td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
                         `<td class="created_on">${created_on}</td><td>${createSelect(issue["status"]["id"])}</td>`;
 
                     table.appendChild(tr);
@@ -147,7 +147,6 @@ function ready() {
         "project_id_redmine": ''
     }, function(items) {
         settings = {
-            "url": "http://redmine.mango.local/",
             "username": items.username_redmine,
             "password": items.password_redmine,
             "start_date": start_date,
