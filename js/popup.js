@@ -1,4 +1,28 @@
-let summTime = (data) => {
+let main = $(".main");
+let table = $(".issues");
+let message = $(".message");
+let url = "http://redmine.mango.local/";
+
+let settings = {
+    "username": "",
+    "password": "",
+    "start_date": "",
+    "end_date": "",
+    "project_id": ""
+};
+
+
+function $(selector) {
+    let elements = document.querySelectorAll(selector);
+    if (elements.length == 1) {
+        elements = elements[0];
+    };
+
+    return elements;
+};
+
+
+function summTime(data) {
     let jobTime = {};
     data.forEach(function(i) {
         let date = i.spent_on;
@@ -11,8 +35,28 @@ let summTime = (data) => {
     return jobTime;
 }
 
+function createSelect (id) {
+    let status = {
+        "11": "Ошибка",
+        "18": "На тестировании",
+        "5": "Закрыт",
+        "14": "Отклонен",
+        "7": "Протестирован",
+        "1": "Новый",
+        "2": "Реализован",
+        "12": "Принят"
+    };
 
-let createDate = (param) => {
+    let select = "<select class='issueStatus'>";
+    for (key in status) {
+        select += `<option value=${key} ${(id == key) ? "selected" : ""}>${status[key]}</option>`;
+    }
+    select += "</select>";
+
+    return select;
+};
+
+function createDate(param) {
     let date = new Date()
     let checkTime = (i) => {
         if (i < 10) { i = "0" + i }
@@ -28,57 +72,91 @@ let createDate = (param) => {
     return `${year}-${month}-${day}`;
 };
 
+function changeStatusIssue(e){
+    let headers = new Headers({ 
+        'Authorization': 'Basic ' + btoa(settings.username + ":" + settings.password),
+        'Content-Type': 'application/json'
+    });
+    let target = event.target;
+    if (target.className === "issueStatus") {
+        let statusId = target.value;
+        let id = target.parentNode.parentNode.id;
 
-let getData = (items) => {
-    console.log(items);
-    let headers = new Headers({'Authorization': 'Basic ' + btoa(items.username + ":" + items.password)});
-    fetch(`http://redmine.mango.local/time_entries.json?user_id=${items.user_id}&from=${items.start_date}&to=${items.end_date}&limit=100`, {
+        fetch(url + "issues/"+ id + ".json", {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify({"issue": {"status_id": statusId}}),
+        })
+    }
+}
+
+function addWatcher(){
+    table.addEventListener("change", changeStatusIssue)
+}
+
+
+function getIssues() {
+    let headers = new Headers({ 'Authorization': 'Basic ' + btoa(settings.username + ":" + settings.password) });
+
+    fetch(url + `issues.json?project_id=${settings.project_id}&status_id=open&tracker_id=59`, {
             method: 'GET',
             headers: headers
         })
         .then(function(response) {
-            return response.json();
+            let status = response.status;
+            if (status == 200) {
+                return response.json();
+            }
+            throw new Error(status);
         })
         .then(function(res) {
-            let table = document.querySelector("#customers");
-            let time_entries = res.time_entries;
-            let job_time = summTime(time_entries);
+            let issues = res.issues;
 
-            for (let i in job_time) {
-                var tr = document.createElement('tr');
-                tr.innerHTML = `<td>${i}</td><td>${job_time[i]}</td>`;
-                table.appendChild(tr);
+            if (issues.length > 0) {
+
+                for (let i in issues) {
+                    let issue = issues[i];
+
+                    let tr = document.createElement('tr');
+                    tr.setAttribute("id", issue["id"]);
+                    let created_on = issue["created_on"].split("T").join('\n');
+                    tr.innerHTML = `<td><a href="${url + "issues/" +issue["id"]}">${issue["id"]}<a></td><td>${issue["subject"]}</td><td>${issue["author"]["name"]}</td>` +
+                        `<td class="created_on">${created_on}</td><td>${createSelect(issue["status"]["id"])}</td>`;
+
+                    table.appendChild(tr);
+                }
             }
         })
-        .catch(alert);
+        .catch(e => {
+            main.classList.add("hide");
+            message.classList.remove("hide");
+            message.innerHTML = e;
+        });
 }
+
+
 
 
 function ready() {
     let start_date = createDate();
-    let end_date   = createDate("now");
+    let end_date = createDate("now");
 
     chrome.storage.sync.get({
         "username_redmine": '',
         "password_redmine": '',
-        "user_id_redmine": '',
+        "project_id_redmine": ''
     }, function(items) {
-        let params = {
-          "username": items.username_redmine,
-          "password": items.password_redmine,
-          "user_id": items.user_id_redmine,
-          "start_date": start_date,
-          "end_date": end_date
+        settings = {
+            "username": items.username_redmine,
+            "password": items.password_redmine,
+            "start_date": start_date,
+            "end_date": end_date,
+            "project_id": items.project_id_redmine
         };
-        getData(params);
+        addWatcher();
+        getIssues();
     });
 
 }
 
-let width = 260;
-let height = 500;
-
 document.addEventListener("DOMContentLoaded", ready);
-window.onresize = function(event) {
-    window.resizeTo(width,height);
-};
